@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>식약처 법령 워처</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--fg:#1b1d29;--mut:#6b7085;--line:#e4e6ef;--acc:#4f46e5;--new:#ef4444}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1117;--card:#181b25;--fg:#eceef6;--mut:#9aa0b8;--line:#2a2e3d;--acc:#8b86ff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:28px 16px 60px}
+h1{margin:0 0 4px;font-size:26px}.sub{color:var(--mut);font-size:14px;margin-bottom:18px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+input,select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg)}
+input{flex:1;min-width:180px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:6px 12px;cursor:pointer;font:inherit;font-size:13px}
+.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.item{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;text-decoration:none;color:inherit}
+.item:hover{border-color:var(--acc)}
+.t{font-weight:700;line-height:1.45}.m{margin-top:6px;font-size:13px;color:var(--mut);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tag{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc);padding:2px 8px;border-radius:6px;font-weight:600}
+.new{background:var(--new);color:#fff;font-size:11px;font-weight:800;padding:2px 6px;border-radius:5px;margin-right:6px}
+.empty{color:var(--mut);text-align:center;padding:40px 0}
+</style></head><body><main>
+<h1>식약처 법령 워처</h1>
+<div class="sub" id="sub">불러오는 중…</div>
+<div class="bar"><input id="q" placeholder="제목 검색"><select id="bd"><option value="">전체 게시판</option></select></div>
+<div class="bar" id="chips"></div>
+<div id="list"></div>
+</main>
+<script>
+let D=[],kw="";
+const $=id=>document.getElementById(id);
+fetch("data.json?"+Date.now()).then(r=>r.json()).then(j=>{
+  D=j.items;const nw=D.filter(isNew).length;
+  $("sub").textContent=`마지막 업데이트 ${j.updated} · 전체 ${D.length}건 · 최근 7일 새 글 ${nw}건`;
+  [...new Set(D.map(x=>x.board))].forEach(b=>$("bd").add(new Option(b,b)));
+  $("chips").innerHTML=["전체",...j.keywords].map((k,i)=>`<button class="chip ${i?"":"on"}" data-k="${i?k:""}">${k}</button>`).join("");
+  $("chips").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;kw=b.dataset.k;[...$("chips").children].forEach(c=>c.classList.toggle("on",c===b));render()};
+  render();
+}).catch(()=>$("sub").textContent="data.json 이 아직 없어요. GitHub Actions 를 한 번 실행해 주세요.");
+function isNew(x){return (Date.now()-new Date(x.first_seen))/864e5<=7}
+function render(){
+  const q=$("q").value.trim(),bd=$("bd").value;
+  const r=D.filter(x=>(!kw||x.title.includes(kw))&&(!q||x.title.includes(q))&&(!bd||x.board===bd));
+  $("list").innerHTML=r.length?r.map(x=>`<a class="item" href="${x.url}" target="_blank" rel="noopener">
+    <div class="t">${isNew(x)?'<span class="new">NEW</span>':""}${x.title}</div>
+    <div class="m"><span class="tag">${x.board}</span><span>${x.date}</span><span>${x.dept||""}</span></div></a>`).join(""):'<div class="empty">해당하는 항목이 없어요</div>';
+}
+$("q").oninput=render;$("bd").onchange=render;
+</script></body></html>
