@@ -74,10 +74,4 @@ def main():
     for i, r in found.items():
         r["first_seen"] = old.get(i, {}).get("first_seen", today)
     merged = {**old, **found}
-    items = sorted(merged.values(), key=lambda x: (x["date"], x["first_seen"]), reverse=True)
-    OUT.write_text(json.dumps({"updated": today, "keywords": KEYWORDS, "items": items},
-                              ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"완료: 전체 {len(items)}건 (이번에 새로 발견 {len(set(found) - set(old))}건)")
-
-if __name__ == "__main__":
-    main()
+    items = sorted(merged.values(), key=lambda x:
